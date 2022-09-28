@@ -81,12 +81,14 @@ func validatePod(w http.ResponseWriter, r *http.Request) {
 				admissionResponse.Result = &metav1.Status{
 					Message: containerImage + " Not a valid Image",
 				}
+				break
 			}
 		} else {
 			admissionResponse.Allowed = false
 			admissionResponse.Result = &metav1.Status{
 				Message: containerImage + " Not a valid Image",
 			}
+			break
 		}
 	}
 	var admissionReviewResponse admissionv1.AdmissionReview
