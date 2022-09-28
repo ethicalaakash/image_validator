@@ -1,10 +1,10 @@
-module image_checker
+module image_validator
 
 go 1.19
 
 require (
-	k8s.io/api v0.25.1
-	k8s.io/apimachinery v0.25.1
+	k8s.io/api v0.25.2
+	k8s.io/apimachinery v0.25.2
 )
 
 require (
