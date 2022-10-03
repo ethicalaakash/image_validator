@@ -9,16 +9,17 @@ import (
 	"strings"
 
 	admissionv1 "k8s.io/api/admission/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func ImageChecker(pod corev1.Pod) *admissionv1.AdmissionResponse {
+func ImageChecker(containers []corev1.Container) *admissionv1.AdmissionResponse {
 	var logger = log.New(os.Stdout, "http:", log.LstdFlags)
 	admissionResponse := &admissionv1.AdmissionResponse{}
-	for i := range pod.Spec.Containers {
-		containerImage := pod.Spec.Containers[i].Image
+	for i := range containers {
+		containerImage := containers[i].Image
 		logger.Printf("validating Image: %v", containerImage)
 		if strings.Contains(containerImage, "/") {
 			registry := strings.Split(containerImage, "/")
@@ -68,4 +69,25 @@ func AdmissionReviewFromRequest(r *http.Request, deserializer runtime.Decoder) (
 		return nil, err
 	}
 	return admissionReviewRequest, nil
+}
+
+func ValidateDeployment(rawRequest []byte, deserializer runtime.Decoder) (*admissionv1.AdmissionResponse, error) {
+	deployment := appsv1.Deployment{}
+
+	if _, _, err := deserializer.Decode(rawRequest, nil, &deployment); err != nil {
+		return nil, err
+	}
+	containers := deployment.Spec.Template.Spec.Containers
+	admissionResponse := ImageChecker(containers)
+	return admissionResponse, nil
+}
+
+func ValidatePod(rawRequest []byte, deserializer runtime.Decoder) (*admissionv1.AdmissionResponse, error) {
+	pod := corev1.Pod{}
+	if _, _, err := deserializer.Decode(rawRequest, nil, &pod); err != nil {
+		return nil, err
+	}
+	containers := pod.Spec.Containers
+	admissionResponse := ImageChecker(containers)
+	return admissionResponse, nil
 }
